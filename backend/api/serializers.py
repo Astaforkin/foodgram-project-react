@@ -2,7 +2,6 @@ import base64
 
 from django.core.files.base import ContentFile
 from django.db.models import F
-from djoser.serializers import UserSerializer
 from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
                             Recipe, ShoppingCart, Tag, User)
 from rest_framework import serializers
@@ -13,6 +12,7 @@ from .validators import ingredients_validator, tags_validator
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для модели пользователей"""
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,11 +24,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Создает нового пользователя."""
+
         user = User.objects.create_user(**validated_data)
         return user
 
     def get_is_subscribed(self, following):
         """Определяет подписан ли пользователь на данного автора."""
+
         user = self.context['request'].user
         if user.is_anonymous:
             return False
