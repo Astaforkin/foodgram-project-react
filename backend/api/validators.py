@@ -1,7 +1,5 @@
 from django.forms import ValidationError
 
-from .serializers import Tag
-
 
 def ingredients_validator(ingredients):
     if not ingredients:

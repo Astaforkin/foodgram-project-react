@@ -12,17 +12,34 @@ csv_files = [
 class Command(BaseCommand):
     """Загружает ингредиенты из файла csv."""
 
-    def add_arguments(self, parser):
-        parser.add_argument('csv_file', type=str, help='Путь к csv файлу')
+    def csv_loader(self, cf):
+        csv_file = 'static/data/ingredients.csv'
+        with open(csv_file, encoding='utf-8', newline='') as csvfile:
+            reader = DictReader(csvfile, fieldnames=cf['fieldnames'])
+            print(f'Загрузка в таблицу модели {cf["model"].__name__}')
+
+            i, err, r = 0, 0, 0
+
+            for row in reader:
+                try:
+                    cf['model'].objects.update_or_create(
+                        name=row['name'], defaults=row
+                    )
+                    r += 1
+                except Exception as error:
+                    print(row)
+                    print(
+                        f'Ошибка записи в таблицу модели '
+                        f'{cf["model"].__name__}, '
+                        f'{str(error)}')
+                    err += 1
+                i += 1
+            print(
+                f'Всего: {i} строк. Загружено: {r} строк. '
+                f'Ошибки: {err} строк.')
 
     def handle(self, *args, **options):
-        csv_file = options['csv_file']
-        with open(csv_file, newline='', encoding='utf-8') as file:
-            reader = DictReader(file)
-            for row in reader:
-                ingredient, created = (
-                    Ingredient.objects.update_or_create(
-                        name=row['name'],
-                        measurement_unit=row['measurement_unit']
-                    )
-                )
+        print("Идет загрузка данных")
+        for сf in csv_files:
+            self.csv_loader(сf)
+        print('Загрука завершена.')
