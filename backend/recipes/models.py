@@ -7,9 +7,9 @@ User = get_user_model()
 class Ingredient(models.Model):
     """Модель ингредиентов для рецепта"""
     name = models.CharField(verbose_name='Название ингредиента',
-                            max_length=150)
+                            max_length=200)
     unit = models.CharField(verbose_name='Единица измерения',
-                                         max_length=20)
+                                         max_length=200)
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -20,13 +20,13 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Модель тегов для рецепта"""
     name = models.CharField(verbose_name='Название тега',
-                            max_length=16,
+                            max_length=200,
                             unique=True)
     color = models.CharField(verbose_name='Цвет тега',
-                             max_length=7,
+                             max_length=200,
                              unique=True)
     slug = models.SlugField(verbose_name='Слаг тега',
-                            max_length=16,
+                            max_length=200,
                             unique=True)
 
     class Meta:
