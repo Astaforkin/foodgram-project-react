@@ -4,7 +4,7 @@ from .models import Follow, Ingredient, IngredientAmount, Recipe, Tag, User
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    # list_display = ('name', 'measurement_unit')
+    list_display = ('name', 'measurement_unit')
     search_fields = ('name',)
 
 
