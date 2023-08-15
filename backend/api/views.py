@@ -11,7 +11,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
-
 from .filters import RecipeFilter, IngredientFilter
 from .permissions import IsAuthorOrAuthenticatedOrReadOnly, IsSubscribeOnly
 from .serializers import (FavouriteRecipeSerializer, FollowSerializer,
@@ -21,13 +20,15 @@ from .serializers import (FavouriteRecipeSerializer, FollowSerializer,
 
 class UserViewSet(viewsets.ModelViewSet):
     """Вьюсет для работы с пользователями"""
+
     http_method_names = ['get', 'post', 'head', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
     def get_permissions(self):
-        """Дает доступ к эндпоинту me только
-            аутентифицированному пользователю"""
+        """Дает доступ к эндпоинтам только аутентифицированным пользователям
+            и разрешает метод delete только для своих подписок."""
+
         if self.request.method == 'DELETE':
             return [IsSubscribeOnly()]
         if self.action == 'me':
@@ -75,6 +76,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для работы с тегами."""
+
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
     pagination_class = None
@@ -82,6 +84,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для работы с ингредиентами."""
+
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
     pagination_class = None
@@ -91,6 +94,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для работы с рецептами."""
+
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
     queryset = (
         Recipe.objects.select_related('author')
@@ -101,6 +105,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
+        """Выбор сериализатора в зависимости от действия"""
+
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
         return RecipeWriteSerializer
@@ -108,6 +114,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
+        """Добавление и удаление рецепта в избанное."""
+
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         in_favourite = Favourites.objects.filter(user=user, recipe=recipe)
@@ -132,6 +140,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
+        """Добавление и удаление рецепта в список покупок."""
+
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         in_shopping_cart = ShoppingCart.objects.filter(user=user,
@@ -155,6 +165,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
+        """Формирует список для покупок и отдает
+            пользователю в виде текстового файла."""
+
         user = self.request.user
         ingredients_to_buy = IngredientAmount.objects.filter(
             recipe__in_shopping_cart__user=user).values(

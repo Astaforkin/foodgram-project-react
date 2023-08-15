@@ -1,15 +1,11 @@
 import base64
 
 from django.core.files.base import ContentFile
-from django.forms import ValidationError
 from django.db.models import F
-from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer as BaseUserSerializer
+from djoser.serializers import UserSerializer
 from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
                             Recipe, ShoppingCart, Tag, User)
 from rest_framework import serializers
-from rest_framework.fields import CurrentUserDefault
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .utils import ingredient_amount_set
 from .validators import ingredients_validator, tags_validator
@@ -17,6 +13,8 @@ from .validators import ingredients_validator, tags_validator
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для модели пользователей"""
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta:
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'password', 'is_subscribed')
@@ -25,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
+        """Создает нового пользователя."""
         user = User.objects.create_user(**validated_data)
         return user
 
@@ -140,6 +139,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        """Создает новый рецепт."""
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
@@ -182,6 +182,7 @@ class FollowSerializer(serializers.ModelSerializer):
         return True
 
     def get_recipes(self, obj):
+        """Возвращает краткие рецепты автора."""
         recipes_limit = int(self.context['request'].query_params.get(
             'recipes_limit', default=3)
         )
@@ -190,4 +191,5 @@ class FollowSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_recipes_count(self, following):
+        """Определяет сколько рецептов создано пользователем."""
         return following.recipes.count()
