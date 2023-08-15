@@ -8,10 +8,12 @@ from djoser.serializers import UserSerializer as BaseUserSerializer
 from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
                             Recipe, ShoppingCart, Tag, User)
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .utils import ingredient_amount_set
 from .validators import ingredients_validator, tags_validator
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для модели пользователей"""
@@ -24,12 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-
-    # def update(self, instance, validated_data):
-    #     if 'password' in validated_data:
-    #         password = validated_data.pop('password')
-    #         instance.set_password(password)
-    #     return super().update(instance, validated_data)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -75,7 +71,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Recipe
         exclude = ['pub_date']
@@ -84,7 +80,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         """Получает ингредиенты для рецепта."""
         ingredients = recipe.ingredients.values(
             'id', 'name', 'measurement_unit',
-            'ingredient_amount__amount'
+            amount=F('ingredient_amount__amount')
         )
         return ingredients
 
@@ -133,11 +129,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = self.initial_data.get('tags')
         ingredients_validator(ingredients)
         tags_validator(tags)
-        # if ingredients == []:
-        #     raise ValidationError('Отсутствуют ингредиенты.')
-        # for ingredient in ingredients:
-        #     if int(ingredient['amount']) <= 0:
-        #         raise ValidationError('Количество должно быть положительным!')
         return data
 
     def create(self, validated_data):
@@ -165,7 +156,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         serializer = RecipeReadSerializer(instance, context=self.context)
         return serializer.data
-    
+
 
 class FollowSerializer(serializers.ModelSerializer):
     """Отображает авторов, на которых подписан пользователь."""

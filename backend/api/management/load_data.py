@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         csv_file = options['csv_file']
         with open(csv_file, newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
+            reader = DictReader(file)
             for row in reader:
                 ingredient, created = (
                     Ingredient.objects.update_or_create(
