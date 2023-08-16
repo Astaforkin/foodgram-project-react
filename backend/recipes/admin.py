@@ -1,6 +1,8 @@
 from django.contrib import admin
 
-from .models import (Favourites, Follow, Ingredient, IngredientAmount, Recipe,
+from users.models import Follow
+
+from .models import (Favourites, Ingredient, IngredientAmount, Recipe,
                      ShoppingCart, Tag)
 
 

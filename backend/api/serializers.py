@@ -5,8 +5,8 @@ from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
 from rest_framework import serializers
 from users.models import Follow
 
-from .utils import ingredient_amount_set
 from .extra_fields import Base64ImageField
+from .utils import ingredient_amount_set
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -58,6 +58,44 @@ class FavouriteRecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'time_to_prepare']
         read_only_fields = ['id', 'name', 'image', 'time_to_prepare']
 
+    def validate_favorite(self, data, user, recipe):
+        """Валидация добавления и удаления из избранного."""
+
+        if self.context.get('request').method == 'POST':
+            if Favourites.objects.filter(user=user, recipe=recipe).exists():
+                raise ValidationError('Рецепт уже в избранном.')
+            return data
+
+        if self.context.get('request').method == 'DELETE':
+            if Favourites.objects.filter(user=user, recipe=recipe).exists():
+                return data
+            raise ValidationError('Этого рецепта нет в избранном.')
+
+    def validate_shopping_cart(self, data, user, recipe):
+        """Валидация добавления и удаления в список покупок."""
+
+        if self.context.get('request').method == 'POST':
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                raise ValidationError('Рецепт уже в списке покупок.')
+            return data
+
+        if self.context.get('request').method == 'DELETE':
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return data
+            raise ValidationError('Этого рецепта нет в списке покупок.')
+
+    def validate(self, data):
+        """Вызов валидирующей функции и возврат валидированных данных."""
+
+        user = self.context.get('request').user
+        recipe = self.instance
+
+        if self.context.get('action_name') == 'favorite':
+            return self.validate_favorite(data, user, recipe)
+
+        if self.context.get('action_name') == 'shopping_cart':
+            return self.validate_shopping_cart(data, user, recipe)
+
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения рецептов."""
@@ -95,7 +133,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class IngredeintAmountSerializer(serializers.ModelSerializer):
-    """Сериализатор для записи ингредиента и количества в рецепт."""
+    """Сериализатор для записи ингредиента и количества в рецептe."""
     id = serializers.IntegerField(write_only=True)
     amount = serializers.IntegerField(write_only=True)
 
@@ -190,6 +228,20 @@ class FollowSerializer(serializers.ModelSerializer):
             'email', 'id', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count'
         ]
+
+    def validate(self, data):
+        user = self.context.get('request').user
+        following = self.instance
+        if self.context.get('request').method == 'POST':
+            if Follow.objects.filter(user=user, following=following).exists():
+                raise ValidationError('Вы уже подписаны.')
+            if user == following:
+                raise ValidationError('Нельзя подписываться на самого себя.')
+            return data
+        if self.context.get('request').method == 'DELETE':
+            if Follow.objects.filter(user=user, following=following).exists():
+                return data
+            raise ValidationError('Такой подписки нет.')
 
     def get_is_subscribed(self, *args):
         return True

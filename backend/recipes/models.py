@@ -17,9 +17,7 @@ def validate_color(value):
         raise ValidationError('Такой цвет уже занят другим тегом.')
     reg = re.compile(r'^#([a-f0-9]{6}|[A-F0-9]{6})$')
     if not reg.match(value):
-        raise ValidationError(
-            'Введен неправильный hex-color.'
-        )
+        raise ValidationError('Введен неправильный hex-color.')
 
 
 class Ingredient(models.Model):
@@ -72,7 +70,7 @@ class Recipe(models.Model):
         User,
         null=True,
         on_delete=models.SET_NULL,
-        verbose_name='Автор',
+        verbose_name='Автор рецепта',
         related_name='recipes'
     )
     time_to_prepare = models.PositiveIntegerField(
@@ -161,31 +159,6 @@ class Favourites(models.Model):
         return f'{self.recipe} - {self.user}'
 
 
-class Follow(models.Model):
-    """Модель подписок на других пользователей."""
-    user = models.ForeignKey(
-        User,
-        verbose_name='Подписчик',
-        on_delete=models.CASCADE,
-        related_name='follower'
-    )
-    following = models.ForeignKey(
-        User,
-        verbose_name='Подписка',
-        on_delete=models.CASCADE,
-        related_name='following'
-    )
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = [models.UniqueConstraint(fields=['user', 'following'],
-                                               name='unique_follow')]
-
-    def __str__(self) -> str:
-        return f'{self.user} - {self.following}'
-
-
 class ShoppingCart(models.Model):
     """Модель списка покупок."""
     user = models.ForeignKey(
@@ -208,5 +181,31 @@ class ShoppingCart(models.Model):
             fields=['user', 'recipe'], name='unique_recipe_in_shopping_cart')
         ]
 
-        def __str__(self):
-            return f'{self.user} - {self.recipe}'
+    def shopping_list_text(self, request):
+        """Формирует список покупок."""
+
+        ingredients_to_buy = IngredientAmount.objects.filter(
+            recipe__in_shopping_cart__user=self.request.user).values(
+                'ingredient__name',
+                'ingredient__measurement_unit').annotate(
+                    amount_sum=models.Sum('amount')
+        ).order_by('ingredient__name').distinct()
+
+        shopping_list_text = 'Список продуктов для покупки.\n'
+
+        for index, ing in enumerate(ingredients_to_buy, 1):
+            ingredient = ing['ingredient__name'].capitalize()
+            amount = ing['amount_sum']
+            measure = ing['ingredient__measurement_unit']
+            if index < 10:
+                intend = 2
+            else:
+                intend = 1
+            new_line = (
+                f'\n{index}.{" " * intend}{ingredient} - {amount} {measure}.'
+            )
+            shopping_list_text += new_line
+        return shopping_list_text
+
+    def __str__(self):
+        return f'{self.user} - {self.recipe}'
