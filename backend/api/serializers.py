@@ -1,13 +1,12 @@
-import base64
-
-from django.core.files.base import ContentFile
 from django.db.models import F
+from django.forms import ValidationError
 from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
                             Recipe, ShoppingCart, Tag, User)
 from rest_framework import serializers
+from users.models import Follow
 
 from .utils import ingredient_amount_set
-from .validators import ingredients_validator, tags_validator
+from .extra_fields import Base64ImageField
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -24,13 +23,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Создает нового пользователя."""
-
         user = User.objects.create_user(**validated_data)
         return user
 
     def get_is_subscribed(self, following):
         """Определяет подписан ли пользователь на данного автора."""
-
         user = self.context['request'].user
         if user.is_anonymous:
             return False
@@ -41,16 +38,16 @@ class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для модели тегов."""
     class Meta:
         model = Tag
-        fields = '__all__'
-        read_only_fields = ['__all__']
+        fields = ['name', 'color', 'slug']
+        read_only_fields = ['name', 'color', 'slug']
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели ингредиентов."""
     class Meta:
         model = Ingredient
-        fields = '__all__'
-        read_only_fields = ['__all__']
+        fields = ['name', 'measurement_unit']
+        read_only_fields = ['name', 'measurement_unit']
 
 
 class FavouriteRecipeSerializer(serializers.ModelSerializer):
@@ -59,18 +56,7 @@ class FavouriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ['id', 'name', 'image', 'time_to_prepare']
-        read_only_fields = ['__all__']
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
+        read_only_fields = ['id', 'name', 'image', 'time_to_prepare']
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -133,11 +119,32 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'time_to_prepare', 'author', 'image'
         ]
 
-    def validate(self, data):
+    def validate_ingredients(self, data):
+        """Валидация ингредиентов."""
         ingredients = self.initial_data.get('ingredients')
+        if not ingredients:
+            raise ValidationError('Отсутствуют ингредиенты.')
+        used_ingredients = []
+        for ingredient in ingredients:
+            if int(ingredient['amount']) < 1:
+                raise ValidationError(
+                    'Убедитесь, что это значение больше либо равно 1.'
+                )
+            if ingredient['id'] in used_ingredients:
+                raise ValidationError('Ингредиенты повторяются.')
+            used_ingredients.append(ingredient['id'])
+        return data
+
+    def validate_tags(self, data):
+        """Валидация тегов."""
         tags = self.initial_data.get('tags')
-        ingredients_validator(ingredients)
-        tags_validator(tags)
+        tags_count = Tag.objects.count()
+        if not tags or len(tags) > tags_count:
+            raise ValidationError(
+                f'Количество тегов должно быть от 1 до {tags_count}.'
+            )
+        if len(tags) != len(set(tags)):
+            raise ValidationError('Введенные теги повторяются.')
         return data
 
     def create(self, validated_data):
@@ -151,6 +158,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        """Обновляет существующий рецепт."""
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get('time_to_prepare',
@@ -178,7 +186,10 @@ class FollowSerializer(serializers.ModelSerializer):
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count')
         model = User
-        read_only_fields = ['__all__']
+        read_only_fields = [
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        ]
 
     def get_is_subscribed(self, *args):
         return True
