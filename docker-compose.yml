@@ -9,12 +9,14 @@ services:
 
   db_food:
     image: postgres:13.10
+    restart: always
     env_file: .env
     volumes:
       - pg_food:/var/lib/postgresql/data
 
   backend:
     build: ./backend/
+    restart: always
     env_file: .env
     depends_on:
       - db_food
@@ -28,11 +30,16 @@ services:
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
+    depends_on:
+      - backend
 
   gateway:
     build: ./gateway/
+    restart: always
     volumes:
       - static:/staticfiles/
       - media:/media
     ports:
-      - 8000:80 
+      - 8000:80
+    depends_on:
+      - frontend 
