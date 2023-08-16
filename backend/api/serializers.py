@@ -38,16 +38,16 @@ class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для модели тегов."""
     class Meta:
         model = Tag
-        fields = ['name', 'color', 'slug']
-        read_only_fields = ['name', 'color', 'slug']
+        fields = ['id', 'name', 'color', 'slug']
+        read_only_fields = ['id', 'name', 'color', 'slug']
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели ингредиентов."""
     class Meta:
         model = Ingredient
-        fields = ['name', 'measurement_unit']
-        read_only_fields = ['name', 'measurement_unit']
+        fields = ['id', 'name', 'measurement_unit']
+        read_only_fields = ['id', 'name', 'measurement_unit']
 
 
 class FavouriteRecipeSerializer(serializers.ModelSerializer):
@@ -55,8 +55,8 @@ class FavouriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'image', 'time_to_prepare']
-        read_only_fields = ['id', 'name', 'image', 'time_to_prepare']
+        fields = ['id', 'name', 'image', 'cooking_time']
+        read_only_fields = ['id', 'name', 'image', 'cooking_time']
 
     def validate_favorite(self, data, user, recipe):
         """Валидация добавления и удаления из избранного."""
@@ -154,7 +154,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = [
             'ingredients', 'tags', 'name', 'text',
-            'time_to_prepare', 'author', 'image'
+            'cooking_time', 'author', 'image'
         ]
 
     def validate_ingredients(self, data):
@@ -199,8 +199,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         """Обновляет существующий рецепт."""
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('time_to_prepare',
-                                                   instance.time_to_prepare)
+        instance.cooking_time = validated_data.get('cooking_time',
+                                                   instance.cooking_time)
         tags_data = validated_data.pop('tags')
         ingredients_data = validated_data.pop('ingredients')
         instance.tags.set(tags_data)
