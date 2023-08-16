@@ -1,6 +1,6 @@
 from django.db.models import F
 from django.forms import ValidationError
-from recipes.models import (Favourites, Follow, Ingredient, IngredientAmount,
+from recipes.models import (Favourites, Ingredient, IngredientAmount,
                             Recipe, ShoppingCart, Tag, User)
 from rest_framework import serializers
 from users.models import Follow
