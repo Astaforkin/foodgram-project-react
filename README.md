@@ -16,7 +16,7 @@
 - POSTGRES_DB=foodgram
 - DB_HOST=db_food
 - DB_PORT=5432
-- SECRET_KEY
+- SECRET_KEY='your_secret_key'
 - ALLOWED_HOSTS='localhost,127.0.0.1'
 - DEBUG=True
 -- -
