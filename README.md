@@ -39,8 +39,11 @@
 - Для загрузки базы данных ингрединтов
 ``` docker-compose exec backend python manage.py load_data ```
 -- -
+### Для доступа к сервису:
+http://localhost:8000/
+
 ### Для доступа в админ-зону:
-http://localhost/admin
+http://localhost:8000/admin
 - Используйте данные суперпользователя
 -- -
 ### Технологии:
