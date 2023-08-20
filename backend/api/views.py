@@ -12,11 +12,12 @@ from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from users.models import Follow
 
-from .filters import RecipeFilter, IngredientFilter
-from .permissions import IsAuthorOrAuthenticatedOrReadOnly, IsSubscribeOnly
-from .serializers import (FavouriteRecipeSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, TagSerializer, UserSerializer)
+from api.filters import RecipeFilter, IngredientFilter
+from api.permissions import IsAuthorOrAuthenticatedOrReadOnly, IsSubscribeOnly
+from api.serializers import (FavouriteRecipeSerializer, FollowSerializer,
+                             IngredientSerializer, RecipeReadSerializer,
+                             RecipeWriteSerializer, TagSerializer,
+                             UserSerializer)
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -158,9 +159,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             пользователю в виде текстового файла."""
 
         shopping_list_text = ShoppingCart.shopping_list_text(self, request)
+        filename = 'shopping_list.txt'
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_list.txt"'
-        )
+        response['Content-Disposition'] = f'attachment; filename={filename}'
         response.write(shopping_list_text)
         return response

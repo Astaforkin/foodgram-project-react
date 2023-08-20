@@ -5,8 +5,8 @@ from recipes.models import (Favourites, Ingredient, IngredientAmount,
 from rest_framework import serializers
 from users.models import Follow
 
-from .extra_fields import Base64ImageField
-from .utils import ingredient_amount_set
+from api.extra_fields import Base64ImageField
+from api.utils import ingredient_amount_set
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -159,29 +159,28 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, data):
         """Валидация ингредиентов."""
-        ingredients = self.initial_data.get('ingredients')
-        if not ingredients:
+        minimum_ingredients = 1
+        if not data:
             raise ValidationError('Отсутствуют ингредиенты.')
-        used_ingredients = []
-        for ingredient in ingredients:
-            if int(ingredient['amount']) < 1:
+        used_ingredients = set()
+        for ingredient in data:
+            if int(ingredient['amount']) < minimum_ingredients:
                 raise ValidationError(
                     'Убедитесь, что это значение больше либо равно 1.'
                 )
-            if ingredient['id'] in used_ingredients:
-                raise ValidationError('Ингредиенты повторяются.')
-            used_ingredients.append(ingredient['id'])
+            used_ingredients.add(ingredient['id'])
+        if len(used_ingredients) != len(data):
+            raise ValidationError('Ингредиенты повторяются.')
         return data
 
     def validate_tags(self, data):
         """Валидация тегов."""
-        tags = self.initial_data.get('tags')
         tags_count = Tag.objects.count()
-        if not tags or len(tags) > tags_count:
+        if not data or len(data) > tags_count:
             raise ValidationError(
                 f'Количество тегов должно быть от 1 до {tags_count}.'
             )
-        if len(tags) != len(set(tags)):
+        if len(data) != len(set(data)):
             raise ValidationError('Введенные теги повторяются.')
         return data
 

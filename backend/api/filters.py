@@ -1,7 +1,7 @@
 from django_filters import rest_framework
 from rest_framework import filters
 
-from .views import Recipe, Tag, User
+from api.views import Recipe, Tag, User
 
 
 class RecipeFilter(rest_framework.FilterSet):
@@ -17,6 +17,10 @@ class RecipeFilter(rest_framework.FilterSet):
     is_in_shopping_cart = rest_framework.BooleanFilter(
         method='is_in_shopping_cart_method')
 
+    class Meta:
+        model = Recipe
+        fields = ['author', 'tags']
+
     def is_favorited_method(self, queryset, name, value):
         """Возвращает рецепты авторов."""
         if value:
@@ -30,10 +34,6 @@ class RecipeFilter(rest_framework.FilterSet):
                 in_shopping_cart__user=self.request.user
             )
         return queryset
-
-    class Meta:
-        model = Recipe
-        fields = ['author', 'tags']
 
 
 class IngredientFilter(filters.SearchFilter):

@@ -47,11 +47,12 @@ http://localhost:8000/admin
 - Используйте данные суперпользователя
 -- -
 ### Технологии:
-- Python
-- Django Rest Framework
-- Docker
-- Nginx
-- Postgres
+- Python 3.9
+- Django 3.2.3
+- Django Rest Framework 3.14
+- Docker 24.0.5
+- Nginx 1.18
+- Postgres 15.3
 ## Автор
 
 [Астафоркин Никита](https://github.com/Astaforkin)

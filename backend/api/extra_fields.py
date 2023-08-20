@@ -2,7 +2,7 @@ import base64
 
 from django.core.files.base import ContentFile
 
-from .serializers import serializers
+from api.serializers import serializers
 
 
 class Base64ImageField(serializers.ImageField):
