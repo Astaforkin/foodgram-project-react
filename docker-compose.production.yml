@@ -32,12 +32,11 @@ services:
       - static:/frontend_static
 
   gateway:
-    image: astnikita/foodgram_frontend
-    restart: always
+    image: astnikita/foodgram_gateway
+    env_file: .env
     volumes:
       - static:/staticfiles/
       - media:/media
     ports:
-      - 8080:80
-    depends_on:
-      - frontend 
+      - 8000:80
+  
