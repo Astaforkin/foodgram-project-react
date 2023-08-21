@@ -62,6 +62,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     """Модель рецептов"""
+    min_value = 1
     name = models.CharField(verbose_name='Название блюда', max_length=255)
     text = models.TextField(verbose_name='Текст рецепта')
     pub_date = models.DateTimeField(verbose_name='Дата публикации',
@@ -76,7 +77,8 @@ class Recipe(models.Model):
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления',
         default=1,
-        validators=[MinValueValidator(1, message='Минимальное значение - 1')]
+        validators=[MinValueValidator(min_value,
+                                      message='Минимальное значение - 1')]
     )
     ingredients = models.ManyToManyField(
         Ingredient,
