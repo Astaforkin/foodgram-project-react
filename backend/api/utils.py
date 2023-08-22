@@ -1,13 +1,15 @@
-from django.shortcuts import get_object_or_404
-from recipes.models import Ingredient, IngredientAmount
+from recipes.models import IngredientAmount
 
 
 def ingredient_amount_set(recipe, ingredients_data):
     """Создает связи рецепта с количеством ингредиента."""
+    ingredients = []
     for ingredient_data in ingredients_data:
         id = ingredient_data.get('id')
-        ingredient_id = get_object_or_404(Ingredient, id=id)
         amount = ingredient_data.get('amount')
-        IngredientAmount.objects.bulk_create(
-            recipe=recipe, ingredient=ingredient_id, amount=amount
-        )
+        ingredients.append(IngredientAmount(
+            recipe=recipe, ingredient_id=id, amount=amount
+        ))
+    IngredientAmount.objects.bulk_create(
+        ingredients
+    )

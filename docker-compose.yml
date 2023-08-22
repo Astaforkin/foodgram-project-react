@@ -23,6 +23,7 @@ services:
     volumes:
       - static:/backend_static
       - media:/media
+      - ./backend/:/app
 
   frontend:
     env_file: .env
